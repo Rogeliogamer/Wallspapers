@@ -1,455 +1,455 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wallpaper Clock</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Wallpaper Clock</title>
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
 
-         * { margin: 0; padding: 0; box-sizing: border-box; }
+            * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        html, body {
-            width: 100%; height: 100%;
-            overflow: hidden;
-            font-family: 'Share Tech Mono', monospace;
-        }
+            html, body {
+                width: 100%; height: 100%;
+                overflow: hidden;
+                font-family: 'Share Tech Mono', monospace;
+            }
 
-        #bg {
-            position: fixed;
-            inset: 0;
-            transition: background 4s ease;
-            z-index: 0;
-        }
+            #bg {
+                position: fixed;
+                inset: 0;
+                transition: background 4s ease;
+                z-index: 0;
+            }
 
-        /* Estrellas */
-        #stars {
-            position: fixed;
-            inset: 0;
-            z-index: 1;
-            opacity: 0;
-            transition: opacity 3s ease;
-        }
+            /* Estrellas */
+            #stars {
+                position: fixed;
+                inset: 0;
+                z-index: 1;
+                opacity: 0;
+                transition: opacity 3s ease;
+            }
 
-        .star {
-            position: absolute;
-            border-radius: 50%;
-            background: white;
-            animation: twinkle var(--d) ease-in-out infinite alternate;
-        }
+            .star {
+                position: absolute;
+                border-radius: 50%;
+                background: white;
+                animation: twinkle var(--d) ease-in-out infinite alternate;
+            }
 
-        @keyframes twinkle {
-            from { opacity: 0.2; transform: scale(1); }
-            to   { opacity: 1;   transform: scale(1.4); }
-        }
+            @keyframes twinkle {
+                from { opacity: 0.2; transform: scale(1); }
+                to   { opacity: 1;   transform: scale(1.4); }
+            }
 
-        /* Partículas de luz (amanecer/atardecer) */
-        #particles {
-            position: fixed;
-            inset: 0;
-            z-index: 1;
-            pointer-events: none;
-        }
+            /* Partículas de luz (amanecer/atardecer) */
+            #particles {
+                position: fixed;
+                inset: 0;
+                z-index: 1;
+                pointer-events: none;
+            }
 
-        /* Sol / Luna */
-        #celestial {
-            position: fixed;
-            width: 80px; height: 80px;
-            border-radius: 50%;
-            z-index: 2;
-            transition: left 30s linear, bottom 8s ease, background 4s ease, box-shadow 4s ease;
-        }
+            /* Sol / Luna */
+            #celestial {
+                position: fixed;
+                width: 80px; height: 80px;
+                border-radius: 50%;
+                z-index: 2;
+                transition: left 30s linear, bottom 8s ease, background 4s ease, box-shadow 4s ease;
+            }
 
-        /* Contenedor principal */
-        #container {
-            position: fixed;
-            inset: 0;
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+            /* Contenedor principal */
+            #container {
+                position: fixed;
+                inset: 0;
+                z-index: 10;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
 
-        #code-block {
-            position: relative;
-            background: rgba(0,0,0,0.45);
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 4px;
-            padding: 40px 60px;
-            backdrop-filter: blur(12px);
-            box-shadow: 0 0 60px rgba(0,0,0,0.4), inset 0 0 40px rgba(0,0,0,0.2);
-            min-width: 640px;
-        }
+            #code-block {
+                position: relative;
+                background: rgba(0,0,0,0.45);
+                border: 1px solid rgba(255,255,255,0.15);
+                border-radius: 4px;
+                padding: 40px 60px;
+                backdrop-filter: blur(12px);
+                box-shadow: 0 0 60px rgba(0,0,0,0.4), inset 0 0 40px rgba(0,0,0,0.2);
+                min-width: 640px;
+            }
 
-        /* Barra superior tipo editor */
-        #code-block::before {
-            content: '●  ●  ●';
-            position: absolute;
-            top: 12px; left: 20px;
-            font-size: 12px;
-            letter-spacing: 6px;
-            color: rgba(255,255,255,0.4);
-        }
+            /* Barra superior tipo editor */
+            #code-block::before {
+                content: '●  ●  ●';
+                position: absolute;
+                top: 12px; left: 20px;
+                font-size: 12px;
+                letter-spacing: 6px;
+                color: rgba(255,255,255,0.4);
+            }
 
-        #code-block::after {
-            content: 'time.exe';
-            position: absolute;
-            top: 11px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 11px;
-            color: rgba(255,255,255,0.3);
-            letter-spacing: 3px;
-            text-transform: uppercase;
-        }
+            #code-block::after {
+                content: 'time.exe';
+                position: absolute;
+                top: 11px;
+                left: 50%;
+                transform: translateX(-50%);
+                font-size: 11px;
+                color: rgba(255,255,255,0.3);
+                letter-spacing: 3px;
+                text-transform: uppercase;
+            }
 
-        .line {
-            display: flex;
-            align-items: baseline;
-            gap: 0;
-            line-height: 2.1;
-            font-size: 15px;
-        }
+            .line {
+                display: flex;
+                align-items: baseline;
+                gap: 0;
+                line-height: 2.1;
+                font-size: 15px;
+            }
 
-        .ln {
-            color: rgba(255,255,255,0.2);
-            width: 30px;
-            text-align: right;
-            margin-right: 24px;
-            font-size: 12px;
-            flex-shrink: 0;
-        }
+            .ln {
+                color: rgba(255,255,255,0.2);
+                width: 30px;
+                text-align: right;
+                margin-right: 24px;
+                font-size: 12px;
+                flex-shrink: 0;
+            }
 
-        .kw   { color: #ff79c6; }   /* keyword */
-        .var  { color: #8be9fd; }   /* variable */
-        .op   { color: #ff5555; }   /* operator */
-        .str  { color: #f1fa8c; }   /* string/valor */
-        .num  { color: #bd93f9; }   /* number */
-        .cmt  { color: #6272a4; font-style: italic; }  /* comment */
-        .pun  { color: rgba(255,255,255,0.5); }  /* punctuation */
+            .kw   { color: #ff79c6; }   /* keyword */
+            .var  { color: #8be9fd; }   /* variable */
+            .op   { color: #ff5555; }   /* operator */
+            .str  { color: #f1fa8c; }   /* string/valor */
+            .num  { color: #bd93f9; }   /* number */
+            .cmt  { color: #6272a4; font-style: italic; }  /* comment */
+            .pun  { color: rgba(255,255,255,0.5); }  /* punctuation */
         
-        /* Barra de progreso */
-        #progress-bar-wrap {
-            margin-top: 8px;
-            position: relative;
-            height: 6px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 3px;
-            overflow: hidden;
-            margin-left: 54px;
-        }
+            /* Barra de progreso */
+            #progress-bar-wrap {
+                margin-top: 8px;
+                position: relative;
+                height: 6px;
+                background: rgba(255,255,255,0.1);
+                border-radius: 3px;
+                overflow: hidden;
+                margin-left: 54px;
+            }
 
-        #progress-bar {
-            height: 100%;
-            border-radius: 3px;
-            background: linear-gradient(90deg, #bd93f9, #ff79c6);
-            transition: width 1s linear;
-            box-shadow: 0 0 10px #bd93f9;
-        }
+            #progress-bar {
+                height: 100%;
+                border-radius: 3px;
+                background: linear-gradient(90deg, #bd93f9, #ff79c6);
+                transition: width 1s linear;
+                box-shadow: 0 0 10px #bd93f9;
+            }
 
-        /* Hora grande encima */
-        #big-time {
-            font-family: 'Orbitron', sans-serif;
-            font-size: clamp(48px, 6vw, 88px);
-            font-weight: 900;
-            text-align: center;
-            letter-spacing: 8px;
-            margin-bottom: 30px;
-            color: #fff;
-            text-shadow: 0 0 30px rgba(255,255,255,0.5), 0 0 60px rgba(255,255,255,0.2);
-            animation: pulse 2s ease-in-out infinite alternate;
-        }
+            /* Hora grande encima */
+            #big-time {
+                font-family: 'Orbitron', sans-serif;
+                font-size: clamp(48px, 6vw, 88px);
+                font-weight: 900;
+                text-align: center;
+                letter-spacing: 8px;
+                margin-bottom: 30px;
+                color: #fff;
+                text-shadow: 0 0 30px rgba(255,255,255,0.5), 0 0 60px rgba(255,255,255,0.2);
+                animation: pulse 2s ease-in-out infinite alternate;
+            }
 
-        @keyframes pulse {
-            from { text-shadow: 0 0 20px rgba(255,255,255,0.3), 0 0 40px rgba(189,147,249,0.2); }
-            to   { text-shadow: 0 0 40px rgba(255,255,255,0.7), 0 0 80px rgba(189,147,249,0.5); }
-        }
+            @keyframes pulse {
+                from { text-shadow: 0 0 20px rgba(255,255,255,0.3), 0 0 40px rgba(189,147,249,0.2); }
+                to   { text-shadow: 0 0 40px rgba(255,255,255,0.7), 0 0 80px rgba(189,147,249,0.5); }
+            }
 
-        /* Etiqueta de periodo del día */
-        #period-label {
-            text-align: center;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 11px;
-            letter-spacing: 6px;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.5);
-            margin-bottom: 40px;
-            transition: color 4s ease;
-        }
+            /* Etiqueta de periodo del día */
+            #period-label {
+                text-align: center;
+                font-family: 'Orbitron', sans-serif;
+                font-size: 11px;
+                letter-spacing: 6px;
+                text-transform: uppercase;
+                color: rgba(255,255,255,0.5);
+                margin-bottom: 40px;
+                transition: color 4s ease;
+            }
 
-        /* Scanlines overlay */
-        #scanlines {
-            position: fixed;
-            inset: 0;
-            z-index: 5;
-            background: repeating-linear-gradient(
-                0deg,
-                transparent,
-                transparent 2px,
-                rgba(0,0,0,0.04) 2px,
-                rgba(0,0,0,0.04) 4px
-            );
-            pointer-events: none;
-        }
+            /* Scanlines overlay */
+            #scanlines {
+                position: fixed;
+                inset: 0;
+                z-index: 5;
+                background: repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0,0,0,0.04) 2px,
+                    rgba(0,0,0,0.04) 4px
+                );
+                pointer-events: none;
+            }
 
-        /* Vignette */
-        #vignette {
-            position: fixed;
-            inset: 0;
-            z-index: 4;
-            background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%);
-            pointer-events: none;
-        }
-    </style>
-</head>
-<body>
-    <div id="bg"></div>
-    <canvas id="stars"></canvas>
-    <canvas id="particles"></canvas>
-    <div id="celestial"></div>
-    <div id="scanlines"></div>
-    <div id="vignette"></div>
+            /* Vignette */
+            #vignette {
+                position: fixed;
+                inset: 0;
+                z-index: 4;
+                background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%);
+                pointer-events: none;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="bg"></div>
+        <canvas id="stars"></canvas>
+        <canvas id="particles"></canvas>
+        <div id="celestial"></div>
+        <div id="scanlines"></div>
+        <div id="vignette"></div>
 
-    <div id="container">
-        <div>
-            <div id="big-time">00:00:00</div>
-            <div id="period-label">Cargando...</div>
+        <div id="container">
+            <div>
+                <div id="big-time">00:00:00</div>
+                <div id="period-label">Cargando...</div>
 
-            <div id="code-block">
-                <div class="line"><span class="ln">01</span><span class="cmt">// ── Sistema de Tiempo ─────────────────────</span></div>
-                <div class="line"><span class="ln">02</span><span class="kw">const </span><span class="var">tiempo</span><span class="pun"> = {</span></div>
-                <div class="line"><span class="ln">03</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">año</span><span class="op">:</span><span class="pun"> </span><span class="num" id="v-year">----</span><span class="pun">,</span></div>
-                <div class="line"><span class="ln">04</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">mes</span><span class="op">:</span><span class="pun"> </span><span class="str" id="v-month">"----"</span><span class="pun">,</span></div>
-                <div class="line"><span class="ln">05</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">día</span><span class="op">:</span><span class="pun"> </span><span class="num" id="v-day">--</span><span class="pun">,</span></div>
-                <div class="line"><span class="ln">06</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">nombreDía</span><span class="op">:</span><span class="pun"> </span><span class="str" id="v-dayname">"--------"</span><span class="pun">,</span></div>
-                <div class="line"><span class="ln">07</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">hora</span><span class="op">:</span><span class="pun"> </span><span class="num" id="v-hour">--</span><span class="pun">,</span></div>
-                <div class="line"><span class="ln">08</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">minuto</span><span class="op">:</span><span class="pun"> </span><span class="num" id="v-min">--</span><span class="pun">,</span></div>
-                <div class="line"><span class="ln">09</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">segundo</span><span class="op">:</span><span class="pun"> </span><span class="num" id="v-sec">--</span><span class="pun">,</span></div>
-                <div class="line"><span class="ln">10</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">avanceDía</span><span class="op">:</span><span class="pun"> </span><span class="str" id="v-pct">"0.00%"</span></div>
-                <div class="line"><span class="ln">11</span><span class="pun">};</span></div>
-                <div class="line"><span class="ln">12</span><span class="cmt">// ─────────────────────────────────────────</span></div>
-                <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
+                <div id="code-block">
+                    <div class="line"><span class="ln">01</span><span class="cmt">// ── Sistema de Tiempo ─────────────────────</span></div>
+                    <div class="line"><span class="ln">02</span><span class="kw">const </span><span class="var">tiempo</span><span class="pun"> = {</span></div>
+                    <div class="line"><span class="ln">03</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">año</span><span class="op">:</span><span class="pun"> </span><span class="num" id="v-year">----</span><span class="pun">,</span></div>
+                    <div class="line"><span class="ln">04</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">mes</span><span class="op">:</span><span class="pun"> </span><span class="str" id="v-month">"----"</span><span class="pun">,</span></div>
+                    <div class="line"><span class="ln">05</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">día</span><span class="op">:</span><span class="pun"> </span><span class="num" id="v-day">--</span><span class="pun">,</span></div>
+                    <div class="line"><span class="ln">06</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">nombreDía</span><span class="op">:</span><span class="pun"> </span><span class="str" id="v-dayname">"--------"</span><span class="pun">,</span></div>
+                    <div class="line"><span class="ln">07</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">hora</span><span class="op">:</span><span class="pun"> </span><span class="num" id="v-hour">--</span><span class="pun">,</span></div>
+                    <div class="line"><span class="ln">08</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">minuto</span><span class="op">:</span><span class="pun"> </span><span class="num" id="v-min">--</span><span class="pun">,</span></div>
+                    <div class="line"><span class="ln">09</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">segundo</span><span class="op">:</span><span class="pun"> </span><span class="num" id="v-sec">--</span><span class="pun">,</span></div>
+                    <div class="line"><span class="ln">10</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">avanceDía</span><span class="op">:</span><span class="pun"> </span><span class="str" id="v-pct">"0.00%"</span></div>
+                    <div class="line"><span class="ln">11</span><span class="pun">};</span></div>
+                    <div class="line"><span class="ln">12</span><span class="cmt">// ─────────────────────────────────────────</span></div>
+                    <div id="progress-bar-wrap"><div id="progress-bar" style="width:0%"></div></div>
+                </div>
             </div>
         </div>
-    </div>
 
-    <script>
-    // ───── Configuración de periodos del día ─────
-    const PERIODS = [
-        { name: 'Madrugada',  start:  0, end:  5, sky: ['#0a0520','#1a0a3a'], accent: '#1a0a3a' },
-        { name: 'Amanecer',   start:  5, end:  8, sky: ['#ff6b35','#ffa552','#ffcf77','#87ceeb'], accent: '#ff8c42' },
-        { name: 'Mañana',     start:  8, end: 12, sky: ['#87ceeb','#5ba3d0','#4a90d9'], accent: '#5ba3d0' },
-        { name: 'Mediodía',   start: 12, end: 14, sky: ['#2980b9','#1e6ba8','#87ceeb'], accent: '#2980b9' },
-        { name: 'Tarde',      start: 14, end: 18, sky: ['#4a90d9','#5ba3d0','#87ceeb'], accent: '#4a90d9' },
-        { name: 'Atardecer',  start: 18, end: 21, sky: ['#e55d2b','#c0392b','#8e44ad','#2c3e50'], accent: '#e55d2b' },
-        { name: 'Noche',      start: 21, end: 24, sky: ['#0d0d2b','#1a1a4a','#0a0520'], accent: '#1a1a4a' },
-    ];
+        <script>
+            // ───── Configuración de periodos del día ─────
+            const PERIODS = [
+                { name: 'Madrugada',  start:  0, end:  5, sky: ['#0a0520','#1a0a3a'], accent: '#1a0a3a' },
+                { name: 'Amanecer',   start:  5, end:  8, sky: ['#ff6b35','#ffa552','#ffcf77','#87ceeb'], accent: '#ff8c42' },
+                { name: 'Mañana',     start:  8, end: 12, sky: ['#87ceeb','#5ba3d0','#4a90d9'], accent: '#5ba3d0' },
+                { name: 'Mediodía',   start: 12, end: 14, sky: ['#2980b9','#1e6ba8','#87ceeb'], accent: '#2980b9' },
+                { name: 'Tarde',      start: 14, end: 18, sky: ['#4a90d9','#5ba3d0','#87ceeb'], accent: '#4a90d9' },
+                { name: 'Atardecer',  start: 18, end: 21, sky: ['#e55d2b','#c0392b','#8e44ad','#2c3e50'], accent: '#e55d2b' },
+                { name: 'Noche',      start: 21, end: 24, sky: ['#0d0d2b','#1a1a4a','#0a0520'], accent: '#1a1a4a' },
+            ];
 
-    const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-    const DIAS  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+            const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+            const DIAS  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 
-    // ───── Estrellas ─────
-    const starCanvas = document.getElementById('stars');
-    const sCtx = starCanvas.getContext('2d');
-    let stars = [];
+            // ───── Estrellas ─────
+            const starCanvas = document.getElementById('stars');
+            const sCtx = starCanvas.getContext('2d');
+            let stars = [];
 
-    function initStars() {
-        starCanvas.width  = window.innerWidth;
-        starCanvas.height = window.innerHeight;
-        stars = [];
-        for (let i = 0; i < 250; i++) {
-            stars.push({
-            x: Math.random() * starCanvas.width,
-            y: Math.random() * starCanvas.height * 0.7,
-            r: Math.random() * 1.5 + 0.3,
-            a: Math.random(),
-            speed: Math.random() * 0.01 + 0.003,
-            phase: Math.random() * Math.PI * 2
-            });
-        }
-    }
+            function initStars() {
+                starCanvas.width  = window.innerWidth;
+                starCanvas.height = window.innerHeight;
+                stars = [];
+                for (let i = 0; i < 250; i++) {
+                    stars.push({
+                        x: Math.random() * starCanvas.width,
+                        y: Math.random() * starCanvas.height * 0.7,
+                        r: Math.random() * 1.5 + 0.3,
+                        a: Math.random(),
+                        speed: Math.random() * 0.01 + 0.003,
+                        phase: Math.random() * Math.PI * 2
+                    });
+                }
+            }
 
-    function drawStars(t) {
-  sCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
-  stars.forEach(s => {
-    s.phase += s.speed;
-    const alpha = s.a * (0.5 + 0.5 * Math.sin(s.phase));
-    sCtx.beginPath();
-    sCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-    sCtx.fillStyle = `rgba(255,255,255,${alpha})`;
-    sCtx.fill();
-  });
-}
+            function drawStars(t) {
+                sCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
+                stars.forEach(s => {
+                    s.phase += s.speed;
+                    const alpha = s.a * (0.5 + 0.5 * Math.sin(s.phase));
+                    sCtx.beginPath();
+                    sCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+                    sCtx.fillStyle = `rgba(255,255,255,${alpha})`;
+                    sCtx.fill();
+                });
+            }
 
-// ───── Partículas ─────
-const pCanvas = document.getElementById('particles');
-const pCtx = pCanvas.getContext('2d');
-let particles = [];
+            // ───── Partículas ─────
+            const pCanvas = document.getElementById('particles');
+            const pCtx = pCanvas.getContext('2d');
+            let particles = [];
 
-function spawnParticle() {
-  particles.push({
-    x: Math.random() * pCanvas.width,
-    y: pCanvas.height + 10,
-    vy: -(Math.random() * 1.5 + 0.5),
-    vx: (Math.random() - 0.5) * 0.5,
-    life: 1,
-    decay: Math.random() * 0.005 + 0.002,
-    r: Math.random() * 3 + 1,
-    color: `hsl(${Math.random()*40+20},100%,70%)`
-  });
-}
+            function spawnParticle() {
+                particles.push({
+                    x: Math.random() * pCanvas.width,
+                    y: pCanvas.height + 10,
+                    vy: -(Math.random() * 1.5 + 0.5),
+                    vx: (Math.random() - 0.5) * 0.5,
+                    life: 1,
+                    decay: Math.random() * 0.005 + 0.002,
+                    r: Math.random() * 3 + 1,
+                    color: `hsl(${Math.random()*40+20},100%,70%)`
+                });
+            }
 
-function drawParticles(opacity) {
-  pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
-  particles = particles.filter(p => p.life > 0);
-  particles.forEach(p => {
-    p.y  += p.vy; p.x += p.vx; p.life -= p.decay;
-    pCtx.beginPath();
-    pCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-    pCtx.fillStyle = p.color.replace(')', `,${p.life * opacity})`).replace('hsl','hsla');
-    pCtx.fill();
-  });
-}
+            function drawParticles(opacity) {
+                pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+                particles = particles.filter(p => p.life > 0);
+                particles.forEach(p => {
+                    p.y  += p.vy; p.x += p.vx; p.life -= p.decay;
+                    pCtx.beginPath();
+                    pCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    pCtx.fillStyle = p.color.replace(')', `,${p.life * opacity})`).replace('hsl','hsla');
+                    pCtx.fill();
+                });
+            }
 
-function resizeCanvases() {
-  starCanvas.width  = pCanvas.width  = window.innerWidth;
-  starCanvas.height = pCanvas.height = window.innerHeight;
-  initStars();
-}
+            function resizeCanvases() {
+                starCanvas.width  = pCanvas.width  = window.innerWidth;
+                starCanvas.height = pCanvas.height = window.innerHeight;
+                initStars();
+            }
 
-window.addEventListener('resize', resizeCanvases);
-resizeCanvases();
+            window.addEventListener('resize', resizeCanvases);
+            resizeCanvases();
 
-// ───── Interpolación de colores ─────
-function hexToRgb(hex) {
-  hex = hex.replace('#','');
-  if (hex.length === 3) hex = hex.split('').map(c=>c+c).join('');
-  const n = parseInt(hex, 16);
-  return [(n>>16)&255,(n>>8)&255,n&255];
-}
+            // ───── Interpolación de colores ─────
+            function hexToRgb(hex) {
+                hex = hex.replace('#','');
+                if (hex.length === 3) hex = hex.split('').map(c=>c+c).join('');
+                const n = parseInt(hex, 16);
+                return [(n>>16)&255,(n>>8)&255,n&255];
+            }
 
-function lerpColor(c1, c2, t) {
-  const r1=hexToRgb(c1), r2=hexToRgb(c2);
-  return `rgb(${Math.round(r1[0]+(r2[0]-r1[0])*t)},${Math.round(r1[1]+(r2[1]-r1[1])*t)},${Math.round(r1[2]+(r2[2]-r1[2])*t)})`;
-}
+            function lerpColor(c1, c2, t) {
+                const r1=hexToRgb(c1), r2=hexToRgb(c2);
+                return `rgb(${Math.round(r1[0]+(r2[0]-r1[0])*t)},${Math.round(r1[1]+(r2[1]-r1[1])*t)},${Math.round(r1[2]+(r2[2]-r1[2])*t)})`;
+            }
 
-function buildGradient(colors, angle='to bottom') {
-  return `linear-gradient(${angle}, ${colors.join(', ')})`;
-}
+            function buildGradient(colors, angle='to bottom') {
+                return `linear-gradient(${angle}, ${colors.join(', ')})`;
+            }
 
-// ───── Periodo actual ─────
-function getPeriod(hour) {
-  for (const p of PERIODS) {
-    if (hour >= p.start && hour < p.end) return p;
-  }
-  return PERIODS[6];
-}
+            // ───── Periodo actual ─────
+            function getPeriod(hour) {
+                for (const p of PERIODS) {
+                    if (hour >= p.start && hour < p.end) return p;
+                }
+                return PERIODS[6];
+            }
 
-function isNightTime(hour) {
-  return hour >= 21 || hour < 5;
-}
+            function isNightTime(hour) {
+                return hour >= 21 || hour < 5;
+            }
 
-function isDawnDusk(hour) {
-  return (hour >= 5 && hour < 8) || (hour >= 18 && hour < 21);
-}
+            function isDawnDusk(hour) {
+                return (hour >= 5 && hour < 8) || (hour >= 18 && hour < 21);
+            }
 
-// ───── Celestial body (Sol/Luna) ─────
-const cel = document.getElementById('celestial');
+            // ───── Celestial body (Sol/Luna) ─────
+            const cel = document.getElementById('celestial');
 
-function updateCelestial(hour, min) {
-  const totalMins = hour * 60 + min;
-  const dayMins   = 24 * 60;
-  const progress  = totalMins / dayMins;
+            function updateCelestial(hour, min) {
+                const totalMins = hour * 60 + min;
+                const dayMins   = 24 * 60;
+                const progress  = totalMins / dayMins;
 
-  // Movimiento horizontal (0% a 100% de la pantalla)
-  const x = progress * (window.innerWidth - 100) + 50;
+                // Movimiento horizontal (0% a 100% de la pantalla)
+                const x = progress * (window.innerWidth - 100) + 50;
 
-  // Movimiento vertical en arco
-  const arc = Math.sin(progress * Math.PI);
-  const yBase = window.innerHeight * 0.85;
-  const y = yBase - arc * window.innerHeight * 0.65;
+                // Movimiento vertical en arco
+                const arc = Math.sin(progress * Math.PI);
+                const yBase = window.innerHeight * 0.85;
+                const y = yBase - arc * window.innerHeight * 0.65;
 
-  cel.style.left = `${x - 40}px`;
-  cel.style.top  = `${y - 40}px`;
+                cel.style.left = `${x - 40}px`;
+                cel.style.top  = `${y - 40}px`;
 
-  const night = isNightTime(hour);
-  if (night) {
-    cel.style.background = 'radial-gradient(circle at 35% 35%, #f8f8f0, #d4d4c0)';
-    cel.style.boxShadow  = '0 0 20px rgba(220,220,180,0.4), 0 0 50px rgba(180,180,140,0.2)';
-    cel.style.width = cel.style.height = '55px';
-  } else {
-    const warmth = isDawnDusk(hour) ? 1 : 0;
-    const sunColor = warmth ? '#ffaa33' : '#fff176';
-    cel.style.background = `radial-gradient(circle at 40% 35%, white, ${sunColor})`;
-    cel.style.boxShadow  = `0 0 30px ${sunColor}, 0 0 70px ${sunColor}88, 0 0 120px ${sunColor}44`;
-    cel.style.width = cel.style.height = '70px';
-  }
-}
+                const night = isNightTime(hour);
+                if (night) {
+                    cel.style.background = 'radial-gradient(circle at 35% 35%, #f8f8f0, #d4d4c0)';
+                    cel.style.boxShadow  = '0 0 20px rgba(220,220,180,0.4), 0 0 50px rgba(180,180,140,0.2)';
+                    cel.style.width = cel.style.height = '55px';
+                } else {
+                    const warmth = isDawnDusk(hour) ? 1 : 0;
+                    const sunColor = warmth ? '#ffaa33' : '#fff176';
+                    cel.style.background = `radial-gradient(circle at 40% 35%, white, ${sunColor})`;
+                    cel.style.boxShadow  = `0 0 30px ${sunColor}, 0 0 70px ${sunColor}88, 0 0 120px ${sunColor}44`;
+                    cel.style.width = cel.style.height = '70px';
+                }
+            }
 
-// ───── Actualización principal ─────
-let raf;
-let lastSec = -1;
+            // ───── Actualización principal ─────
+            let raf;
+            let lastSec = -1;
 
-function pad(n, l=2) { return String(n).padStart(l, '0'); }
+            function pad(n, l=2) { return String(n).padStart(l, '0'); }
 
-function update(ts) {
-  const now  = new Date();
-  const hour = now.getHours();
-  const min  = now.getMinutes();
-  const sec  = now.getSeconds();
+            function update(ts) {
+                const now  = new Date();
+                const hour = now.getHours();
+                const min  = now.getMinutes();
+                const sec  = now.getSeconds();
 
-  // Solo actualizar DOM cada segundo
-  if (sec !== lastSec) {
-    lastSec = sec;
+                // Solo actualizar DOM cada segundo
+                if (sec !== lastSec) {
+                    lastSec = sec;
 
-    // ── Datos de tiempo ──
-    const year    = now.getFullYear();
-    const monthN  = now.getMonth();
-    const dayN    = now.getDate();
-    const weekDay = now.getDay();
+                    // ── Datos de tiempo ──
+                    const year    = now.getFullYear();
+                    const monthN  = now.getMonth();
+                    const dayN    = now.getDate();
+                    const weekDay = now.getDay();
 
-    document.getElementById('v-year').textContent    = year;
-    document.getElementById('v-month').textContent   = `"${MESES[monthN]}"`;
-    document.getElementById('v-day').textContent     = pad(dayN);
-    document.getElementById('v-dayname').textContent = `"${DIAS[weekDay]}"`;
-    document.getElementById('v-hour').textContent    = pad(hour);
-    document.getElementById('v-min').textContent     = pad(min);
-    document.getElementById('v-sec').textContent     = pad(sec);
+                    document.getElementById('v-year').textContent    = year;
+                    document.getElementById('v-month').textContent   = `"${MESES[monthN]}"`;
+                    document.getElementById('v-day').textContent     = pad(dayN);
+                    document.getElementById('v-dayname').textContent = `"${DIAS[weekDay]}"`;
+                    document.getElementById('v-hour').textContent    = pad(hour);
+                    document.getElementById('v-min').textContent     = pad(min);
+                    document.getElementById('v-sec').textContent     = pad(sec);
 
-    // Porcentaje del día
-    const totalSecs = hour*3600 + min*60 + sec;
-    const pct = (totalSecs / 86400) * 100;
-    document.getElementById('v-pct').textContent   = `"${pct.toFixed(4)}%"`;
-    document.getElementById('progress-bar').style.width = `${pct}%`;
+                    // Porcentaje del día
+                    const totalSecs = hour*3600 + min*60 + sec;
+                    const pct = (totalSecs / 86400) * 100;
+                    document.getElementById('v-pct').textContent   = `"${pct.toFixed(4)}%"`;
+                    document.getElementById('progress-bar').style.width = `${pct}%`;
 
-    // Hora grande
-    document.getElementById('big-time').textContent = `${pad(hour)}:${pad(min)}:${pad(sec)}`;
+                    // Hora grande
+                    document.getElementById('big-time').textContent = `${pad(hour)}:${pad(min)}:${pad(sec)}`;
 
-    // ── Periodo ──
-    const period = getPeriod(hour);
-    document.getElementById('period-label').textContent = `── ${period.name} ──`;
+                    // ── Periodo ──
+                    const period = getPeriod(hour);
+                    document.getElementById('period-label').textContent = `── ${period.name} ──`;
 
-    // ── Fondo ──
-    document.getElementById('bg').style.background = buildGradient(period.sky);
+                    // ── Fondo ──
+                    document.getElementById('bg').style.background = buildGradient(period.sky);
 
-    // ── Estrellas visibles ──
-    const nightAlpha = isNightTime(hour) ? 1 : (isDawnDusk(hour) ? 0.2 : 0);
-    starCanvas.style.opacity = nightAlpha;
+                    // ── Estrellas visibles ──
+                    const nightAlpha = isNightTime(hour) ? 1 : (isDawnDusk(hour) ? 0.2 : 0);
+                    starCanvas.style.opacity = nightAlpha;
 
-    // ── Celestial ──
-    updateCelestial(hour, min);
+                    // ── Celestial ──
+                    updateCelestial(hour, min);
 
-    // ── Partículas amanecer/atardecer ──
-    if (isDawnDusk(hour) && Math.random() > 0.6) spawnParticle();
-  }
+                    // ── Partículas amanecer/atardecer ──
+                    if (isDawnDusk(hour) && Math.random() > 0.6) spawnParticle();
+                }
 
-  drawStars(ts * 0.001);
-  drawParticles(isDawnDusk(hour) ? 0.8 : 0);
+                drawStars(ts * 0.001);
+                drawParticles(isDawnDusk(hour) ? 0.8 : 0);
 
-  raf = requestAnimationFrame(update);
-}
+                raf = requestAnimationFrame(update);
+            }
 
-requestAnimationFrame(update);
-</script>
-</body>
+            requestAnimationFrame(update);
+        </script>
+    </body>
 </html>
