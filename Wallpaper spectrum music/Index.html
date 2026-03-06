@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <title>Spectrum Wallpaper</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=Space+Mono:wght@400;700&display=swap');
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background:#000;
+      }
+
+      /* ── Background layers ── */
+      #bg-solid {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        transition: background 2s ease;
+      }
+
+      #bg-blur {
+        position: fixed;
+        inset:  -40px;
+        z-index:  1;
+        filter: blur(80px) saturate(1.8);
+        opacity: 0.55;
+        transition: opacity 2s ease;
+      }
+
+      #bg-noise {
+        position: fixed;
+        inset: 0;
+        z-index: 2;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+        opacity: 0.6;
+        pointer-events: none;
+      }
+
+      #vignette {
+        position: fixed;
+        inset: 0;
+        z-index: 3;
+        background: radial-gradient(ellipse at 50% 60%, transparent 30%, rgba(0,0,0,0.75) 100%);
+        pointer-events: none;
+      }
+
+      /* ── Main canvas ── */
+      #spectrum-canvas {
+        position:fixed;inset:0;z-index:4;
+      }
+
+      /* ── Reflection canvas ── */
+      #reflect-canvas {
+        position: fixed;
+        left: 0;
+        right: 0;
+        z-index: 4;
+        opacity: 0.25;
+      }
+
+      /* ── Track info card ── */
+      #track-card {
+        position: fixed;
+        left: 60px;
+        bottom: 60px;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        max-width: 460px;
+        padding: 20px 24px;
+        border-radius: 16px;
+        background: rgba(0,0,0,0.45);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255,255,255,0.1);
+        box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+        transition: border-color 1.5s ease, box-shadow 1.5s ease;
+      }
+
+      #album-art {
+        width: 72px;
+        height: 72px;
+        border-radius: 10px;
+        object-fit: cover;
+        flex-shrink: 0;
+        background: rgba(255,255,255,0.08);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        transition: box-shadow 1.5s ease;
+      }
+
+      #album-placeholder {
+        width: 72px;
+        height: 72px;
+        border-radius: 10px;
+        flex-shrink: 0;
+        background: rgba(255,255,255,0.07);
+        border: 1px solid rgba(255,255,255,0.1);
+        display: flex;align-items:center;justify-content:center;
+      }
+
+      #album-placeholder svg {
+        opacity: 0.3;
+      }
+
+      #track-text {
+        flex: 1;
+        min-width: 0;
+      }
+
+      #track-source {
+        font-family: 'Space Mono', monospace;
+        font-size: 9px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.4);
+        margin-bottom: 5px;
+        transition: color 1.5s ease;
+      }
+
+      #track-title {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 22px;
+        letter-spacing: 1px;
+        color: #fff;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        line-height: 1.1;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+      }
+
+      #track-artist {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 13px;
+        font-weight: 300;
+        color: rgba(255,255,255,0.6);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-top: 3px;
+      }
+
+      #track-progress-wrap {
+        margin-top: 10px;
+        height: 3px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+
+      #track-progress-bar {
+        height: 100%;
+        border-radius: 2px;
+        width: 0%;
+        transition: width 1s linear, background 1.5s ease;
+      }
+
+      /* ── Visualizer mode badge ── */
+      #mode-badge {
+        position: fixed;
+        top: 40px;
+        right: 50px;
+        z-index: 10;
+        font-family: 'Space Mono', monospace;
+        font-size: 10px;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        color: rgba(255,255,255,0.35);
+        transition: color 1.5s ease;
+      }
+
+      /* ── Frequency rings ── */
+      #rings-canvas {
+        position: fixed;
+        inset: 0;
+        z-index: 3;
+        opacity: 0.15;
+        pointer-events: none;
+      }
+
+      /* ── Waveform top ── */
+      #wave-canvas {
+        position: fixed;
+        left: 0;
+        right: 0;
+        top: 0;
+        height: 120px;
+        z-index: 4;
+        opacity: 0.6;
+      }
+
+      /* ── No audio notice ── */
+      #no-audio {
+        position: fixed;
+        inset: 0;
+        z-index: 20;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        background: rgba(0,0,0,0.85);
+        backdrop-filter: blur(10px);
+      }
+
+      #no-audio h2 {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 32px;
+        letter-spacing: 4px;
+        color: rgba(255,255,255,0.7);
+      }
+
+      #no-audio p {
+        font-family: 'DM Sans', sans-serif;
+        font-size: 14px;
+        color: rgba(255,255,255,0.4);
+        text-align: center;
+        max-width: 380px;
+        line-height: 1.6;
+      }
+
+      #start-btn {
+        margin-top: 8px;
+        padding: 12px 36px;
+        border-radius: 50px;
+        border: 1px solid rgba(255,255,255,0.3);
+        background: rgba(255,255,255,0.08);
+        color: #fff;
+        font-family: 'Space Mono', monospace;
+        font-size: 12px;
+        letter-spacing: 3px;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      #start-btn:hover {
+        background: rgba(255,255,255,0.18);
+        border-color: rgba(255,255,255,0.6);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="bg-solid"></div>
+    <canvas id="bg-blur"></canvas>
+    <div id="bg-noise"></div>
+    <div id="vignette"></div>
+    <canvas id="rings-canvas"></canvas>
+    <canvas id="wave-canvas"></canvas>
+    <canvas id="spectrum-canvas"></canvas>
+    <canvas id="reflect-canvas"></canvas>
+
+    <!-- Track info -->
+    <div id="track-card">
+      <div id="album-placeholder">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="white">
+          <circle cx="12" cy="12" r="3"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M5.6 18.4l2.8-2.8M15.6 8.4l2.8-2.8"/>
+        </svg>
+      </div>
+      <img id="album-art" style="display:none" alt="Album art">
+      <div id="track-text">
+        <div id="track-source">Esperando audio...</div>
+        <div id="track-title">Sin reproducción</div>
+        <div id="track-artist">—</div>
+        <div id="track-progress-wrap">
+          <div id="track-progress-bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="mode-badge">Spectrum · Live</div>
+
+    <!-- Permissions overlay -->
+    <div id="no-audio">
+      <h2>Spectrum Wallpaper</h2>
+      <p>Para visualizar el audio del sistema, necesitas permitir el acceso al micrófono/audio. En Wallpaper Engine el audio del sistema se captura automáticamente.</p>
+      <button id="start-btn" onclick="initAudio()">ACTIVAR AUDIO</button>
+    </div>
+
+    <script>
+      // ══════════════════════════════════════════════════
+      //  SPECTRUM WALLPAPER — Audio Visualizer
+      //  Compatible: Wallpaper Engine 2.7.3 (Web)
+      // ══════════════════════════════════════════════════
+
+      const specCanvas  = document.getElementById('spectrum-canvas');
+      const reflCanvas  = document.getElementById('reflect-canvas');
+      const waveCanvas  = document.getElementById('wave-canvas');
+      const ringsCanvas = document.getElementById('rings-canvas');
+      const blurCanvas  = document.getElementById('bg-blur');
+
+      const sCtx = specCanvas.getContext('2d');
+      const rCtx = reflCanvas.getContext('2d');
+      const wCtx = waveCanvas.getContext('2d');
+      const kCtx = ringsCanvas.getContext('2d');
+      const bCtx = blurCanvas.getContext('2d');
+
+      let analyser, dataArray, waveArray, source;
+      let audioCtx;
+      const FFT = 2048;
+      const BARS = 128;
+
+      // ── Color themes by detected content ──
+      const THEMES = {
+        music: {
+          name: 'Música',
+          bg: ['#0a0010','#120020'],
+          barColors: (i,n,e) => {
+            const t = i/n;
+            const h = 260 + t*80;
+            return `hsla(${h},90%,${50+e*20}%,0.95)`;
+          },
+          accent: '#c084fc',
+          glow: '#7c3aed',
+        },
+        energetic: {
+          name: 'Alta Energía',
+          bg: ['#0d0005','#1a000a'],
+          barColors: (i,n,e) => {
+            const t = i/n;
+            const h = t < 0.5 ? 350 + t*40 : 30 - (t-0.5)*60;
+            return `hsla(${h},100%,${45+e*25}%,0.97)`;
+          },
+          accent: '#f43f5e',
+          glow: '#e11d48',
+        },
+        ambient: {
+          name: 'Ambiente',
+          bg: ['#000d1a','#001020'],
+          barColors: (i,n,e) => {
+            const t = i/n;
+            const h = 180 + t*60;
+            return `hsla(${h},70%,${40+e*30}%,0.9)`;
+          },
+          accent: '#22d3ee',
+          glow: '#0891b2',
+        },
+        movie: {
+          name: 'Película',
+          bg: ['#0d0800','#1a1000'],
+          barColors: (i,n,e) => {
+            const t = i/n;
+            const h = 35 + t*20;
+            return `hsla(${h},85%,${40+e*30}%,0.93)`;
+          },
+          accent: '#f59e0b',
+          glow: '#d97706',
+        },
+        silent: {
+          name: 'Sin audio',
+          bg: ['#080808','#0f0f0f'],
+          barColors: (i,n,e) => `hsla(220,20%,${30+e*20}%,0.5)`,
+          accent: '#334155',
+          glow: '#1e293b',
+        }
+      };
+
+      let currentTheme = THEMES.silent;
+      let targetTheme  = THEMES.silent;
+      let themeBlend   = 1;
+      let lastThemeName = 'silent';
+
+      // ── Track info state ──
+      let trackInfo = {
+        title: 'Sin reproducción',
+        artist: '—',
+        source: 'Esperando audio...',
+        art: null,
+        progress: 0,
+      };
+
+      // ── Wallpaper Engine API ──
+      function setupWallpaperEngine() {
+        if (window.wallpaperRegisterAudioListener) {
+          window.wallpaperRegisterAudioListener(onWEAudio);
+        }
+        // Media properties (track info from WE)
+        if (window.wallpaperPropertyListener) {
+          window.wallpaperPropertyListener.applyUserProperties = (props) => {};
+        }
+        // WE media info
+        if (window.wallpaperRegisterMediaPropertiesListener) {
+          window.wallpaperRegisterMediaPropertiesListener(onMediaProps);
+        }
+        if (window.wallpaperRegisterMediaThumbnailListener) {
+          window.wallpaperRegisterMediaThumbnailListener(onMediaThumb);
+        }
+        if (window.wallpaperRegisterMediaPlaybackListener) {
+          window.wallpaperRegisterMediaPlaybackListener(onMediaPlayback);
+        }
+        if (window.wallpaperRegisterMediaTimelineListener) {
+          window.wallpaperRegisterMediaTimelineListener(onMediaTimeline);
+        }
+      }
+
+      // WE audio: array of 128 values [0..1]
+      let weAudioData = null;
+
+      function onWEAudio(audioArray) {
+        weAudioData = audioArray; // 128 values
+        document.getElementById('no-audio').style.display = 'none';
+      }
+
+      function onMediaProps(props) {
+        trackInfo.title  = props.title  || 'Sin título';
+        trackInfo.artist = props.artist || (props.albumArtist || '—');
+        trackInfo.source = props.contentType === 1 ? 'Spotify / Música' :
+                           props.contentType === 2 ? 'Video / Película' :
+                           props.contentType === 3 ? 'Podcast' : 'Reproductor local';
+        updateTrackCard();
+        detectThemeFromMedia(props);
+      }
+
+      function onMediaThumb(data) {
+        if (data && data.thumbnail) {
+          const img = document.getElementById('album-art');
+          img.src = data.thumbnail;
+          img.style.display = 'block';
+          document.getElementById('album-placeholder').style.display = 'none';
+          extractColorFromArt(img);
+        }
+      }
+
+      function onMediaPlayback(state) {
+        // state: 0=stopped, 1=playing, 2=paused
+        if (state === 0 || state === 2) {
+          trackInfo.source = state === 2 ? '⏸ Pausado' : 'Detenido';
+          updateTrackCard();
+        }
+      }
+
+      function onMediaTimeline(tl) {
+        if (tl.duration > 0) {
+          trackInfo.progress = tl.position / tl.duration;
+          document.getElementById('track-progress-bar').style.width = (trackInfo.progress * 100) + '%';
+        }
+      }
+
+      function detectThemeFromMedia(props) {
+        // By content type
+        if (props.contentType === 2) { changeTheme('movie'); return; }
+        if (props.contentType === 3) { changeTheme('ambient'); return; }
+        // Check energy via genre hint or just use music default
+        changeTheme('music');
+      }
+
+      function changeTheme(name) {
+        if (lastThemeName === name) return;
+        lastThemeName = name;
+        targetTheme = THEMES[name] || THEMES.music;
+        themeBlend = 0;
+      }
+
+      // ── Color extraction from album art ──
+      function extractColorFromArt(img) {
+        try {
+          const c = document.createElement('canvas');
+          c.width = c.height = 50;
+          const cx = c.getContext('2d');
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            try {
+              cx.drawImage(img, 0, 0, 50, 50);
+              const d = cx.getImageData(0,0,50,50).data;
+              let r=0,g=0,b=0,cnt=0;
+              for(let i=0;i<d.length;i+=16){
+                r+=d[i]; g+=d[i+1]; b+=d[i+2]; cnt++;
+              }
+              r=Math.round(r/cnt); g=Math.round(g/cnt); b=Math.round(b/cnt);
+              applyDynamicColor(r,g,b);
+            } 
+            catch(e){}
+          };
+        } 
+        catch(e){}
+      }
+
+      function applyDynamicColor(r,g,b) {
+        const h = rgbToHsl(r,g,b)[0]*360;
+        // Create custom theme based on album color
+        THEMES.music = {
+          name:'Música',
+          bg:[`hsl(${h},60%,4%)`,`hsl(${h},50%,7%)`],
+          barColors:(i,n,e)=>{
+            const t=i/n;
+            const hh = h + t*60 - 30;
+            return `hsla(${hh},80%,${45+e*25}%,0.95)`;
+          },
+          accent:`hsl(${h},80%,70%)`,
+          glow:`hsl(${h},80%,40%)`,
+        };
+        if(lastThemeName === 'music') themeBlend = 0;
+      }
+
+      function rgbToHsl(r,g,b){
+        r/=255;g/=255;b/=255;
+        const max=Math.max(r,g,b),min=Math.min(r,g,b);
+        let h,s,l=(max+min)/2;
+        if(max===min){h=s=0;}else{
+          const d=max-min;s=l>0.5?d/(2-max-min):d/(max+min);
+          switch(max){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break;}
+          h/=6;
+        }
+        return[h,s,l];
+      }
+
+      // ── Browser fallback audio ──
+      async function initAudio() {
+        try {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          let stream;
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({
+              audio: { mandatory: { chromeMediaSource: 'desktop' } }
+            });
+          } 
+          catch(e) {
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          }
+          source   = audioCtx.createMediaStreamSource(stream);
+          analyser = audioCtx.createAnalyser();
+          analyser.fftSize = FFT;
+          analyser.smoothingTimeConstant = 0.8;
+          source.connect(analyser);
+          dataArray = new Uint8Array(analyser.frequencyBinCount);
+          waveArray = new Uint8Array(analyser.fftSize);
+          document.getElementById('no-audio').style.display = 'none';
+          changeTheme('music');
+        } 
+        catch(e) {
+          console.warn('Audio init failed:', e);
+          startDemoMode();
+        }
+      }
+
+      // ── Demo mode (no audio permission) ──
+      let demoTime = 0;
+      let demoActive = false;
+
+      function startDemoMode() {
+        demoActive = true;
+        document.getElementById('no-audio').style.display = 'none';
+        trackInfo = {
+          title: 'Demo Mode',
+          artist: 'Spectrum Wallpaper',
+          source: 'Simulación',
+          art: null,
+          progress: 0,
+        };
+        updateTrackCard();
+        changeTheme('music');
+      }
+
+      function getDemoData(time) {
+        const arr = new Float32Array(BARS);
+        for (let i = 0; i < BARS; i++) {
+          const t = i / BARS;
+          // Bass bump
+          const bass = i < 10 ? Math.sin(time*2.1) * 0.7 + 0.3 : 0;
+          // Mid presence
+          const mid = i < 40 ? (Math.sin(time*1.3 + i*0.3)*0.4+0.4) * (1-t) : 0;
+          // High shimmer
+          const high = Math.sin(time*3.7 + i*0.8) * 0.2 * t;
+          arr[i] = Math.max(0, Math.min(1, bass + mid + high));
+        }
+        return arr;
+      }
+
+      // ── Resize ──
+      function resize() {
+        const W = window.innerWidth, H = window.innerHeight;
+        [specCanvas, waveCanvas, ringsCanvas, blurCanvas].forEach(c=>{c.width=W;});
+        specCanvas.height  = H;
+        waveCanvas.height  = 120;
+        ringsCanvas.height = H;
+        blurCanvas.height  = H;
+        reflCanvas.width   = W;
+        reflCanvas.height  = H * 0.3;
+        reflCanvas.style.bottom = '0';
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      // ── Update track card DOM ──
+      function updateTrackCard() {
+        document.getElementById('track-title').textContent  = trackInfo.title;
+        document.getElementById('track-artist').textContent = trackInfo.artist;
+        document.getElementById('track-source').textContent = trackInfo.source;
+      }
+
+      // ── Smooth bar heights ──
+      let smoothBars = new Float32Array(BARS).fill(0);
+      let peakBars   = new Float32Array(BARS).fill(0);
+      let peakVel    = new Float32Array(BARS).fill(0);
+
+      // ── Detect energy level for theme switching ──
+      let energyHistory = [];
+
+      function detectEnergyTheme(bars) {
+        const avg = bars.reduce((a,b)=>a+b,0)/bars.length;
+        energyHistory.push(avg);
+        if (energyHistory.length > 120) energyHistory.shift();
+        const meanE = energyHistory.reduce((a,b)=>a+b,0)/energyHistory.length;
+
+        if (lastThemeName === 'movie' || lastThemeName === 'ambient') return;
+        if (meanE > 0.5 && lastThemeName !== 'energetic') changeTheme('energetic');
+        else if (meanE < 0.25 && lastThemeName !== 'ambient') changeTheme('ambient');
+        else if (meanE >= 0.25 && meanE <= 0.5 && lastThemeName !== 'music') changeTheme('music');
+      }
+
+      // ── Main render loop ──
+      let animFrame;
+      let lastTime = 0;
+
+      function render(ts) {
+        animFrame = requestAnimationFrame(render);
+        const dt = Math.min((ts - lastTime)/1000, 0.1);
+        lastTime = ts;
+        demoTime += dt;
+
+        // ── Get frequency data ──
+        let bars = new Float32Array(BARS);
+
+        if (weAudioData) {
+          // Wallpaper Engine provides 128 values
+          for (let i = 0; i < Math.min(BARS, weAudioData.length); i++) {
+            bars[i] = weAudioData[i];
+          }
+        } 
+        else if (analyser && dataArray) {
+          analyser.getByteFrequencyData(dataArray);
+          const step = Math.floor(dataArray.length / BARS);
+          for (let i = 0; i < BARS; i++) {
+            let sum = 0;
+            for (let j = 0; j < step; j++) sum += dataArray[i*step+j];
+            bars[i] = (sum/step) / 255;
+          }
+        } 
+        else if (demoActive) {
+          const d = getDemoData(demoTime);
+          bars = d;
+        }
+
+        // ── Smooth bars ──
+        for (let i = 0; i < BARS; i++) {
+          const v = bars[i];
+          smoothBars[i] += (v - smoothBars[i]) * (v > smoothBars[i] ? 0.6 : 0.15);
+          // Peaks
+          if (smoothBars[i] > peakBars[i]) {
+            peakBars[i] = smoothBars[i];
+            peakVel[i]  = 0;
+          } 
+          else {
+            peakVel[i]  += 0.004;
+            peakBars[i] -= peakVel[i];
+            if (peakBars[i] < 0) peakBars[i] = 0;
+          }
+        }
+
+        // ── Theme blend ──
+        if (themeBlend < 1) {
+          themeBlend = Math.min(1, themeBlend + dt * 0.5);
+          if (themeBlend >= 1) currentTheme = targetTheme;
+        } 
+        else {
+          currentTheme = targetTheme;
+        }
+
+        // ── Detect energy ──
+        if (!weAudioData) detectEnergyTheme(smoothBars);
+
+        const W = specCanvas.width, H = specCanvas.height;
+
+        // ── Background ──
+        const bgGrad = sCtx.createLinearGradient(0,0,0,H);
+        bgGrad.addColorStop(0, currentTheme.bg[0]);
+        bgGrad.addColorStop(1, currentTheme.bg[1]);
+        sCtx.fillStyle = bgGrad;
+        sCtx.fillRect(0,0,W,H);
+
+        // Animated bg blobs
+        drawBgBlobs(W, H);
+
+        // ── Rings ──
+        drawRings(W, H);
+
+        // ── Spectrum bars ──
+        drawSpectrum(W, H);
+
+        // ── Reflection ──
+        drawReflection(W, H);
+
+        // ── Waveform top ──
+        drawWaveform(W);
+
+        // ── Update track progress bar color ──
+        document.getElementById('track-progress-bar').style.background = currentTheme.accent;
+        document.getElementById('track-card').style.borderColor = currentTheme.accent+'44';
+        document.getElementById('track-card').style.boxShadow = `0 8px 40px rgba(0,0,0,0.5), 0 0 30px ${currentTheme.glow}33`;
+        document.getElementById('mode-badge').style.color = currentTheme.accent+'99';
+        document.getElementById('track-source').style.color = currentTheme.accent+'cc';
+
+        // Demo progress
+        if (demoActive) {
+          trackInfo.progress = (demoTime % 180) / 180;
+          document.getElementById('track-progress-bar').style.width = (trackInfo.progress*100)+'%';
+        }
+      }
+
+      // ── Background animated blobs ──
+      let blobAngle = 0;
+      function drawBgBlobs(W, H) {
+        blobAngle += 0.003;
+        bCtx.clearRect(0,0,W,H);
+        const blobs = [
+          { x: W*0.2 + Math.cos(blobAngle)*W*0.1,       y: H*0.3 + Math.sin(blobAngle*0.7)*H*0.1,  r: W*0.3, c: currentTheme.glow },
+          { x: W*0.8 + Math.cos(blobAngle*1.3)*W*0.08,  y: H*0.6 + Math.sin(blobAngle)*H*0.12,      r: W*0.25, c: currentTheme.accent },
+          { x: W*0.5 + Math.cos(blobAngle*0.9)*W*0.15,  y: H*0.8,                                   r: W*0.2, c: currentTheme.glow },
+        ];
+        blobs.forEach(b=>{
+          const g = bCtx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.r);
+          g.addColorStop(0,b.c+'88');
+          g.addColorStop(1,'transparent');
+          bCtx.fillStyle=g;
+          bCtx.fillRect(0,0,W,H);
+        });
+        document.getElementById('bg-blur').style.opacity = '0.55';
+      }
+
+      // ── Frequency rings ──
+      let ringPhase = 0;
+      function drawRings(W, H) {
+        kCtx.clearRect(0,0,W,H);
+        ringPhase += 0.008;
+        const cx = W/2, cy = H*0.5;
+        const energy = smoothBars.slice(0,20).reduce((a,b)=>a+b,0)/20;
+
+        for (let r = 1; r <= 5; r++) {
+          const radius = (W * 0.12 * r) + energy * 40 * Math.sin(ringPhase + r);
+          kCtx.beginPath();
+          kCtx.arc(cx, cy, radius, 0, Math.PI*2);
+          kCtx.strokeStyle = currentTheme.accent + Math.floor(8+r*5).toString(16).padStart(2,'0');
+          kCtx.lineWidth = 0.5;
+          kCtx.stroke();
+        }
+      }
+
+      // ── Spectrum bars ──
+      function drawSpectrum(W, H) {
+        const specH   = H * 0.55;
+        const specY   = H * 0.72;
+        const barW    = (W / BARS) * 0.7;
+        const gap     = (W / BARS) * 0.3;
+
+        for (let i = 0; i < BARS; i++) {
+          const e = smoothBars[i];
+          const x = (i / BARS) * W + gap/2;
+          const bh = e * specH;
+
+          // Glow pass
+          const glowSize = e * 30 + 5;
+          sCtx.shadowBlur  = glowSize;
+          sCtx.shadowColor = currentTheme.accent;
+
+          // Bar gradient
+          const grad = sCtx.createLinearGradient(x, specY, x, specY - bh);
+          const col = currentTheme.barColors(i, BARS, e);
+          grad.addColorStop(0,   currentTheme.accent+'88');
+          grad.addColorStop(0.4, col);
+          grad.addColorStop(1,   '#ffffff');
+
+          sCtx.fillStyle = grad;
+
+          // Rounded top bar
+          const bx = x, by = specY - bh, bw = barW;
+          if (bh > 4) {
+            sCtx.beginPath();
+            sCtx.moveTo(bx, specY);
+            sCtx.lineTo(bx, by + 3);
+            sCtx.quadraticCurveTo(bx, by, bx+3, by);
+            sCtx.lineTo(bx+bw-3, by);
+            sCtx.quadraticCurveTo(bx+bw, by, bx+bw, by+3);
+            sCtx.lineTo(bx+bw, specY);
+            sCtx.closePath();
+            sCtx.fill();
+          } 
+          else {
+            sCtx.fillRect(bx, specY-bh, bw, bh);
+          }
+
+          // Peak dot
+          sCtx.shadowBlur = 15;
+          sCtx.fillStyle = '#ffffff';
+          const py = specY - peakBars[i] * specH - 3;
+          sCtx.fillRect(x, py, barW, 2);
+        }
+
+        sCtx.shadowBlur = 0;
+
+        // Baseline glow
+        const lineGrad = sCtx.createLinearGradient(0,0,W,0);
+        lineGrad.addColorStop(0,'transparent');
+        lineGrad.addColorStop(0.5, currentTheme.accent+'66');
+        lineGrad.addColorStop(1,'transparent');
+        sCtx.fillStyle = lineGrad;
+        sCtx.fillRect(0, specY, W, 1);
+      }
+
+      // ── Reflection (mirrored bars below baseline) ──
+      function drawReflection(W, H) {
+        const specY = H * 0.72;
+        rCtx.clearRect(0,0,W,reflCanvas.height);
+        rCtx.save();
+        rCtx.scale(1,-1);
+        rCtx.translate(0,-reflCanvas.height);
+        // Copy a strip from the spectrum
+        const stripH = Math.min(reflCanvas.height, H - specY);
+        rCtx.drawImage(specCanvas, 0, specY, W, stripH, 0, 0, W, stripH);
+        rCtx.restore();
+        // Fade gradient over reflection
+        const fade = rCtx.createLinearGradient(0,0,0,reflCanvas.height);
+        fade.addColorStop(0,'rgba(0,0,0,0.3)');
+        fade.addColorStop(1,'rgba(0,0,0,0.95)');
+        rCtx.fillStyle = fade;
+        rCtx.fillRect(0,0,W,reflCanvas.height);
+      }
+
+      // ── Waveform top ──
+      function drawWaveform(W) {
+        wCtx.clearRect(0,0,W,120);
+
+        let wave;
+        if (analyser && waveArray) {
+          analyser.getByteTimeDomainData(waveArray);
+          wave = waveArray;
+        } 
+        else {
+          // Synthesize from freq bars
+          wave = new Uint8Array(W);
+          for (let i = 0; i < W; i++) {
+            const t = i/W;
+            let v = 128;
+            for (let b = 0; b < Math.min(BARS,20); b++) {
+              v += smoothBars[b] * 20 * Math.sin(demoTime*(b+1)*1.5 + t*Math.PI*2*(b+1));
+            }
+            wave[i] = Math.max(0,Math.min(255,v));
+          }
+        }
+
+        const energy = smoothBars.slice(0,30).reduce((a,b)=>a+b,0)/30;
+        wCtx.lineWidth   = 1.5;
+        wCtx.strokeStyle = currentTheme.accent + 'aa';
+        wCtx.shadowBlur  = 10;
+        wCtx.shadowColor = currentTheme.accent;
+        wCtx.beginPath();
+
+        const step = Math.ceil(wave.length / W);
+        for (let i = 0; i < W; i++) {
+          const idx = i * step;
+          const v   = (wave[idx] / 255) * 80 + 20;
+          if (i === 0) wCtx.moveTo(i, v);
+          else wCtx.lineTo(i, v);
+        }
+        wCtx.stroke();
+        wCtx.shadowBlur = 0;
+
+        // Top fade
+        const fade = wCtx.createLinearGradient(0,0,0,120);
+        fade.addColorStop(0,'rgba(0,0,0,0)');
+        fade.addColorStop(1,'rgba(0,0,0,0.7)');
+        wCtx.fillStyle = fade;
+        wCtx.fillRect(0,0,W,120);
+      }
+
+      // ── Init ──
+      setupWallpaperEngine();
+      updateTrackCard();
+
+      // Auto-start if WE is available, else show overlay
+      if (window.wallpaperRegisterAudioListener) {
+        document.getElementById('no-audio').style.display = 'none';
+        changeTheme('music');
+      }
+
+      requestAnimationFrame(render);
+    </script>
+  </body>
+</html>
